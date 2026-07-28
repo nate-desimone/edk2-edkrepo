@@ -12,8 +12,10 @@ import configparser
 import datetime
 import fnmatch
 import os
+import platform
 import re
 import shutil
+import subprocess
 import sys
 import tarfile
 import traceback
@@ -110,9 +112,22 @@ def create_self_extractor(version):
         f.write(archive_data)
     os.chmod(run_path, 0o755)
 
+def create_file_catalog(version, sign):
+    if not sign:
+        return
+    if platform.system() != 'Windows':
+        print('Skipping file catalog generation: New-FileCatalog is only available on Windows')
+        return
+    dist_dir = os.path.abspath(os.path.join('..', 'dist'))
+    run_path = os.path.join(dist_dir, '{}.run'.format(edkrepo_version))
+    cat_path = os.path.join(dist_dir, '{}.run.cat'.format(edkrepo_version))
+    ps_command = 'New-FileCatalog -Path "{}" -CatalogFilePath "{}" -CatalogVersion 2.0'.format(run_path, cat_path)
+    subprocess.run(['powershell', '-NoProfile', '-NonInteractive', '-Command', ps_command], check=True)
+
 def main():
     parser = ArgumentParser()
     parser.add_argument('-b', '--build', action='store', default=None, help='Specifies the build number to use for the installer package.')
+    parser.add_argument('-s', '--sign', action='store_true', default=False, help='Generates a signable file catalog (.cat) for the installer. Only supported when this script is run on a Windows build machine.')
     args = parser.parse_args()
 
     # Initialize environment variables and version information.
@@ -175,6 +190,14 @@ def main():
         print('Generated self-extracting installer successfully')
     except:
         print('Failed to generate self-extracting installer')
+        return 1
+
+    # Generate installer catalog file
+    try:
+        create_file_catalog(version, args.sign)
+        print('Generated installer catalog file successfully')
+    except:
+        print('Failed to generate installer catalog file')
         return 1
 
     # Clean up temporary files

@@ -239,7 +239,14 @@ if errorlevel 1 (
 )
 
 REM
-REM Step 6 - Create 7-Zip archive
+REM Step 6 - Sign EdkRepoInstaller.exe
+REM
+if "/s" == "%1" (
+  signtool sign /n "Open Source Developer, Nathaniel Desimone" /t http://time.certum.pl/ /fd sha256 /v ..\dist\self_extract\EdkRepoInstaller.exe
+)
+
+REM
+REM Step 7 - Create 7-Zip archive
 REM
 del /F ..\edkrepo_installer\SelfExtract\setup-package.7z
 ..\edkrepo_installer\SelfExtract\7za a -mx9 -ms=on -m0=LZMA2 -mmt=off ..\edkrepo_installer\SelfExtract\setup-package.7z ..\dist\self_extract\*
@@ -250,7 +257,7 @@ if errorlevel 1 (
 rmdir /S /Q ..\dist\self_extract
 
 REM
-REM Step 7 - Generate packed .exe
+REM Step 8 - Generate packed .exe
 REM
 cd ..\edkrepo_installer\SelfExtract
 call build_selfextract.bat
@@ -261,7 +268,14 @@ if errorlevel 1 (
 )
 
 REM
-REM Step 8 - Rename setup.exe to EdkRepoInstaller-x.x.x.exe
+REM Step 9 - Sign final packed .exe
+REM
+if "/s" == "%1" (
+  signtool sign /n "Open Source Developer, Nathaniel Desimone" /t http://time.certum.pl/ /fd sha256 /v ..\dist\setup.exe
+)
+
+REM
+REM Step 10 - Rename setup.exe to EdkRepoInstaller-x.x.x.exe
 REM
 if exist final_copy.bat (
   call final_copy.bat
