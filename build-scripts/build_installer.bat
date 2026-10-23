@@ -280,6 +280,27 @@ if errorlevel 1 (
 )
 
 REM
+REM Sign the installer and tool executables before they are packed
+REM
+call :SignFile "..\dist\self_extract\EdkMingwInstaller.exe"
+if errorlevel 1 (
+  set SCRIPT_ERROR=1
+  goto End
+)
+
+call :SignFile "..\dist\self_extract\tools\edkclang-core.exe"
+if errorlevel 1 (
+  set SCRIPT_ERROR=1
+  goto End
+)
+
+call :SignFile "..\dist\self_extract\tools\EdkClangSettings.exe"
+if errorlevel 1 (
+  set SCRIPT_ERROR=1
+  goto End
+)
+
+REM
 REM Step 7 - Create 7-Zip archive
 REM
 del /F ..\SelfExtract\setup-package.7z
@@ -302,6 +323,15 @@ if errorlevel 1 (
 )
 
 REM
+REM Sign the packed installer before it is renamed
+REM
+call :SignFile "..\dist\setup.exe"
+if errorlevel 1 (
+  set SCRIPT_ERROR=1
+  goto End
+)
+
+REM
 REM Step 9 - Rename setup.exe to EdkClangSetup-x.x.x.exe
 REM
 if exist final_copy.bat (
@@ -315,3 +345,9 @@ goto Done
 :Fail
 exit /b 1
 :Done
+goto :EOF
+
+:SignFile
+REM Signs the file passed as %1 and returns the signtool exit code.
+signtool sign /n "Open Source Developer, Nathaniel Desimone" /t http://time.certum.pl/ /fd sha256 /v %1
+exit /b %ERRORLEVEL%
